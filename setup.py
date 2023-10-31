@@ -70,7 +70,7 @@ else:
     rust_extensions = []
 
 setup(
-    name="xlwings",
+    name="xlguru",
     version=version,
     rust_extensions=rust_extensions,
     zip_safe=False,  # Rust extensions are not zip safe
