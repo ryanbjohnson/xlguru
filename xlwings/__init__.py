@@ -2,7 +2,7 @@ import os
 import sys
 from functools import wraps
 
-__version__ = "dev"
+__version__ = "0.30.12"
 
 # Platform specifics
 if sys.platform.startswith("darwin"):

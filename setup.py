@@ -16,6 +16,7 @@ with open(os.path.join(os.path.dirname(__file__), "README.rst")) as f:
 # Version Number
 with open(os.path.join(os.path.dirname(__file__), "xlwings", "__init__.py")) as f:
     version = re.compile(r'.*__version__ = "(.*?)"', re.S).match(f.read()).group(1)
+version = "0.30.12"
 
 # Dependencies
 data_files = []
@@ -74,15 +75,15 @@ setup(
     version=version,
     rust_extensions=rust_extensions,
     zip_safe=False,  # Rust extensions are not zip safe
-    url="https://www.xlwings.org",
+    url="https://www.systemasolutions.ca",
     project_urls={
-        "Source": "https://github.com/xlwings/xlwings",
-        "Documentation": "https://docs.xlwings.org",
+        "Source": "https://github.com/ryanbjohnson/xlguru",
+        "Documentation": "https://github.com/ryanbjohnson/xlguru",
     },
     license="BSD 3-clause",
-    author="Zoomer Analytics LLC",
-    author_email="felix.zumstein@zoomeranalytics.com",
-    description="Make Excel fly: Interact with Excel from Python and vice versa.",
+    author="Systema365 Inc.",
+    author_email="ryan@systemasolutions.ca",
+    description="PyWings for Business",
     long_description=readme,
     data_files=data_files,
     packages=find_packages(
