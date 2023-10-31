@@ -406,6 +406,13 @@ class Sheet(base_classes.Sheet):
                 },
             }
         )
+    @property
+    def rows(self):
+        return len(self.api["values"])
+    
+    @property
+    def columns(self):
+        return len(self.api["values"][0])
 
     @property
     def api(self):
@@ -431,6 +438,12 @@ class Sheet(base_classes.Sheet):
     def book(self):
         return self.sheets.book
 
+    def row(self, row):
+        return Range(sheet=self, arg1=(row, 1), arg2=(row, self.columns))
+    
+    def column(self, column):
+        return Range(sheet=self, arg1=(1, column), arg2=(self.rows, column))
+    
     def range(self, arg1, arg2=None):
         return Range(sheet=self, arg1=arg1, arg2=arg2)
 
@@ -439,7 +452,7 @@ class Sheet(base_classes.Sheet):
         return Range(
             sheet=self,
             arg1=(1, 1),
-            arg2=(1_048_576, 16_384),
+            arg2=(self.rows, self.columns),
         )
 
     @property

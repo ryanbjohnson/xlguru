@@ -2353,6 +2353,7 @@ class Range:
     def __call__(self, *args):
         return Range(impl=self.impl(*args))
 
+    
     @property
     def rows(self):
         """
