@@ -90,6 +90,49 @@ def xlfunc(f=None, **kwargs):
     else:
         return inner(f)
 
+def xl_localfunc(f=None, **kwargs):
+    def inner(f):
+        if not hasattr(f, "__xllfunc__"):
+            xlf = f.__xllfunc__ = {}
+            xlf["name"] = f.__name__
+            xlargs = xlf["args"] = []
+            xlargmap = xlf["argmap"] = {}
+            sig = func_sig(f)
+            num_args = len(sig["args"])
+            num_defaults = len(sig["defaults"])
+            num_required_args = num_args - num_defaults
+            if sig["vararg"] and num_defaults > 0:
+                raise XlwingsError(
+                    "xlwings does not support UDFs "
+                    "with both optional and variable length arguments"
+                )
+            for var_pos, var_name in enumerate(sig["args"]):
+                arg_info = {
+                    "name": var_name,
+                    "pos": var_pos,
+                    "doc": f"Positional argument {var_pos + 1}",
+                    "vararg": var_name == sig["vararg"],
+                    "options": {},
+                }
+                if var_pos >= num_required_args:
+                    arg_info["optional"] = sig["defaults"][var_pos - num_required_args]
+                xlargs.append(arg_info)
+                xlargmap[var_name] = xlargs[-1]
+            xlf["ret"] = {
+                "doc": f.__doc__
+                if f.__doc__ is not None
+                else f"Local function '{f.__name__}'",
+                "options": {},
+            }
+        f.__xllfunc__["volatile"] = check_bool("volatile", default=False, **kwargs)
+        f.__xllfunc__["namespace"] = kwargs.get("namespace")
+        f.__xllfunc__["help_url"] = kwargs.get("help_url")
+        return f
+
+    if f is None:
+        return inner
+    else:
+        return inner(f)
 
 def xlret(convert=None, **kwargs):
     if convert is not None:
@@ -263,14 +306,43 @@ def custom_functions_code(
             CustomFunctions.associate("{func_name.upper()}", {func_name});
             """
             )
+    
+        # Local JS Functions SSRJ
+        if hasattr(obj, "__xllfunc__"):
+            xlfunc = obj.__xllfunc__
+            func_name = xlfunc["name"]
+            args = xlfunc["args"]
+            arglist = []
+            for arg in args:
+                if arg["vararg"]:
+                    arglist.append("..." + arg["name"])
+                else:
+                    arglist.append(arg["name"])
+            argcsv = ", ".join(arglist)
+            functionresult = obj(*arglist)
+            if "return" in functionresult.lower():
+                
+                js += dedent(
+                    f"""\
+                async function {func_name}({argcsv}) {{
+                                        
+                    {functionresult}
+                }}
+                CustomFunctions.associate("{func_name.upper()}", {func_name});
+                """
+                )
     return js
 
 
 def custom_functions_meta(module):
     funcs = []
     for name, obj in inspect.getmembers(module):
+        xlfunc = None
         if hasattr(obj, "__xlfunc__"):
             xlfunc = obj.__xlfunc__
+        elif hasattr(obj, "__xllfunc__"):
+            xlfunc = obj.__xllfunc__
+        if xlfunc:
             func = {}
             func["description"] = xlfunc["ret"]["doc"]
             if xlfunc["help_url"]:
@@ -302,6 +374,8 @@ def custom_functions_meta(module):
                 params.append(param)
             func["parameters"] = params
             funcs.append(func)
+            
+    
     return {
         "allowCustomDataForDataTypeAny": True,
         "allowErrorForDataTypeAny": True,

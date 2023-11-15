@@ -430,6 +430,12 @@ class Sheet(base_classes.Sheet):
         )
         self.api["name"] = value
 
+    def copySheet(self, name):
+        self.append_json_action(
+            func="copySheet",
+            args=name,
+        )
+
     @property
     def index(self):
         return self._index
@@ -438,8 +444,19 @@ class Sheet(base_classes.Sheet):
     def book(self):
         return self.sheets.book
 
+    def duplicate_row(self, row:int, total_rows:int):
+        if total_rows < 2:
+            raise ValueError("total_rows must be greater than 1")
+        
+        clean_space = Range(sheet=self, arg1=(row + 1, 1), arg2=(row + total_rows - 1, self.columns))
+        clean_space.insert(shift = "down", copy_origin = "format_from_left_or_above")
+        #row1.insert(shift = "down", copy_origin = "format_from_left_or_above")
+        #row2 : Range = self.row(row + 1)
+        #row2.copy(row1)
+            
     def row(self, row):
-        return Range(sheet=self, arg1=(row, 1), arg2=(row, self.columns))
+        M =  Range(sheet=self, arg1=(row, 1), arg2=(row, self.columns))
+        return M
     
     def column(self, column):
         return Range(sheet=self, arg1=(1, column), arg2=(self.rows, column))

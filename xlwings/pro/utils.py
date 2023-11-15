@@ -92,7 +92,7 @@ class LicenseHandler:
             cipher_suite = LicenseHandler.get_cipher()
             try:
                 license_info = json.loads(cipher_suite.decrypt(key.encode()).decode())
-            except (binascii.Error, InvalidToken):
+            except:
                 raise xlwings.LicenseError("Invalid xlwings license key.") from None
         else:
             signature = hmac.new(

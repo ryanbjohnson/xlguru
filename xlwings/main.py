@@ -1353,6 +1353,22 @@ class Sheet:
             self.impl = books.active.sheets(sheet).impl
         else:
             self.impl = impl
+    
+    def duplicate_row(self, row:int, total_rows:int):
+        return self.impl.duplicate_row(row, total_rows)
+    
+    def duplicate_column(self, column, times=1, insert='right'):
+        return self.impl.duplicate_column(column, times, insert)
+    
+    def row(self, row):
+        return self.impl.row(row)
+
+    def column(self, column):
+        return self.impl.column(column)
+    
+    def copySheet(self, name):
+        return self.impl.copySheet(name)
+
 
     @property
     def api(self):

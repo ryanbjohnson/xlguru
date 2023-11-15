@@ -20,6 +20,7 @@ from .udfs_officejs import (
     custom_functions_meta,
     xlarg as arg,
     xlfunc as func,
+    xl_localfunc as localfunc,
     xlret as ret,
 )
 from .utils import LicenseHandler
@@ -32,6 +33,7 @@ __all__ = (
     "MarkdownStyle",
     "arg",
     "func",
+    "localfunc",
     "ret",
     "custom_functions_code",
     "custom_functions_meta",
