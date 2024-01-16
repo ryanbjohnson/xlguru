@@ -3,13 +3,13 @@ import "core-js/actual/object/assign";
 import "core-js/actual/array/includes";
 import "core-js/actual/global-this";
 import "core-js/actual/function/name";
-import { xlAlert } from "./alert";
+import { Login, xlAlert } from "./alert";
 
 const version = "dev";
 globalThis.callbacks = {};
 export async function runPython(
   url = "",
-  { auth = "", include = "", exclude = "", headers = {} }: Options = {}
+  { auth = "", include = "", exclude = "", headers = {} }: Options = {}, loadPropertyNames = ""  // SSRJ Added loadPropertyNames options
 ) {
   try {
     await Excel.run(async (context) => {
@@ -39,10 +39,12 @@ export async function runPython(
         );
       }
 
+      
       if (auth === "") {
         auth = config["AUTH"] || "";
       }
 
+      
       if (include === "") {
         include = config["INCLUDE"] || "";
       }
@@ -106,7 +108,7 @@ export async function runPython(
         if (namedItem.type === "Range") {
           names.push({
             name: namedItem.name,
-            sheet: namedItem.getRange().worksheet.load("position"),
+            sheet: namedItem.getRange().worksheet.load("position, name"),
             range: namedItem.getRange().load("address"),
             scope_sheet_name: null,
             scope_sheet_index: null,
@@ -122,6 +124,7 @@ export async function runPython(
         names2.push({
           name: namedItem.name,
           sheet_index: namedItem.sheet.position,
+          sheet_name: namedItem.sheet.name,
           address: namedItem.range.address.split("!").pop(),
           scope_sheet_name: null,
           scope_sheet_index: null,
@@ -155,9 +158,17 @@ export async function runPython(
       sheetsLoader.forEach((item, ix) => {
         if (!excludeArray.includes(item["sheet"].name)) {
           let range: Excel.Range;
+          
+          // SSRJ Added
+          let propertyNames = "values, numberFormatCategories"
+          if (loadPropertyNames !== "") {
+            propertyNames = propertyNames + "," + loadPropertyNames;
+          }
+          // --
+
           range = item["sheet"]
             .getRange(`A1:${item["lastCell"].address}`)
-            .load("values, numberFormatCategories");
+            .load(propertyNames);  // SSRJ changed from hard coded to user defined parameter
           sheetsLoader[ix]["range"] = range;
           // Names (sheet scope)
           sheetsLoader[ix]["names"] = item["sheet"].names.load("name, type");
@@ -206,11 +217,12 @@ export async function runPython(
         if (excludeArray.includes(item["sheet"].name)) {
           values = [[]];
         } else {
-          values = item["range"].values;
+          values = item["range"].values;``
           if (Office.context.requirements.isSetSupported("ExcelApi", "1.12")) {
             // numberFormatCategories requires Excel 2021/365
             // i.e., dates aren't transformed to Python's datetime in Excel <=2019
             let categories = item["range"].numberFormatCategories;
+            
             // Handle dates
             // https://learn.microsoft.com/en-us/office/dev/scripts/resources/samples/excel-samples#dates
             values.forEach(
@@ -306,11 +318,21 @@ export async function runPython(
           pictures: picturesArray,
           tables: tablesArray,
         });
+
+        // SSRJ added
+        if (loadPropertyNames !== "") {
+          let latestSheet = payload["sheets"][payload["sheets"].length - 1];
+          loadPropertyNames.split(",").map(s => s.trim()).forEach((property) => {
+            latestSheet[property] = item["range"][property];
+          });
+        }
+          
       }
 
       // console.log(payload);
 
       // API call
+      
       let response = await fetch(url, {
         method: "POST",
         headers: headers,
@@ -330,6 +352,8 @@ export async function runPython(
       // Run Functions
       if (rawData !== null) {
         const forceSync = ["sheet"];
+        // check if it has a login action
+        
         for (let action of rawData["actions"]) {
           await globalThis.callbacks[action.func](context, action);
           if (forceSync.some((el) => action.func.toLowerCase().includes(el))) {
@@ -350,6 +374,7 @@ interface Options {
   include?: string;
   exclude?: string;
   headers?: {};
+  loadPropertyNames?: string;
 }
 
 interface Action {
@@ -366,6 +391,7 @@ interface Action {
 interface Names {
   name: string;
   sheet_index?: number;
+  sheet_name?: string;
   sheet?: Excel.Worksheet;
   range?: Excel.Range;
   address?: string;
@@ -441,9 +467,11 @@ export function registerCallback(callback: Function) {
 // Didn't find a way to use registerCallback so that webpack won't strip out these
 // functions when optimizing
 let funcs = {
+  Login: Login,
   setValues: setValues,
   clearContents: clearContents,
   addSheet: addSheet,
+  copySheet: copySheet,
   setSheetName: setSheetName,
   setAutofit: setAutofit,
   setRangeColor: setRangeColor,
@@ -531,7 +559,22 @@ async function addSheet(context: Excel.RequestContext, action: Action) {
   } else {
     sheet = context.workbook.worksheets.add();
   }
+  
   sheet.position = parseInt(action.args[0].toString());
+}
+
+async function copySheet(context: Excel.RequestContext, action: Action) {
+  // 1st arg: sheet index to copy
+  // 2nd arg: sheet name of new sheet
+  // Position is always after the sheet being copied
+  let newSheetName: string = action.args[0].toString();
+  
+  let sheets = context.workbook.worksheets.load("items");
+  let sheet: Excel.Worksheet = sheets.items[action.sheet_position];
+
+  let newsheet = sheet.copy(Excel.WorksheetPositionType.after, sheet);
+  newsheet.name = newSheetName;
+ 
 }
 
 async function setSheetName(context: Excel.RequestContext, action: Action) {
@@ -672,6 +715,10 @@ async function alert(context: Excel.RequestContext, action: Action) {
   xlAlert(myPrompt, myTitle, myButtons, myMode, myCallback);
 }
 
+async function login(context: Excel.RequestContext, action: Action) {
+  Login();
+}
+
 async function setRangeName(context: Excel.RequestContext, action: Action) {
   let range = await getRange(context, action);
   context.workbook.names.add(action.args[0].toString(), range);
@@ -781,5 +828,6 @@ async function copyRange(context: Excel.RequestContext, action: Action) {
   const destination = context.workbook.worksheets.items[
     parseInt(action.args[0].toString())
   ].getRange(action.args[1].toString());
+  
   destination.copyFrom(await getRange(context, action));
 }

@@ -21,7 +21,14 @@ function dialogCallback(asyncResult: Office.AsyncResult<Office.Dialog>) {
 
 function processMessage(arg: Office.DialogParentMessageReceivedEventArgs) {
   dialog.close();
+
+  if (arg.message === "guru_api_key") {
+    return;
+  }
+
   let [selection, callback] = arg.message.split("|");
+  
+
   if (callback !== "" && callback in globalThis.callbacks) {
     globalThis.callbacks[callback](selection);
   } else {
@@ -82,3 +89,48 @@ export function xlAlert(
     dialogCallback
   );
 }
+
+export function Login() {
+    let width: number;
+    let height: number;
+    if (Office.context.platform.toString() === "OfficeOnline") {
+      width = 28;
+      height = 36;
+    } else if (Office.context.platform.toString() === "PC") {
+      width = 28; // seems to have a wider min width
+      height = 40;
+    } else {
+      width = 32;
+      height = 30;
+    }
+  
+    Office.context.ui.displayDialogAsync(
+      window.location.origin +
+      `/login`,
+      { height: height, width: width, displayInIframe: true },
+      dialogCallback
+    );
+  }
+  
+export function LoginComplete() {
+  let width: number;
+  let height: number;
+  if (Office.context.platform.toString() === "OfficeOnline") {
+    width = 28;
+    height = 36;
+  } else if (Office.context.platform.toString() === "PC") {
+    width = 28; // seems to have a wider min width
+    height = 40;
+  } else {
+    width = 32;
+    height = 30;
+  }
+
+  Office.context.ui.displayDialogAsync(
+    window.location.origin +
+    `/logincomplete`,
+    { height: height, width: width, displayInIframe: true },
+    dialogCallback
+  );
+}
+

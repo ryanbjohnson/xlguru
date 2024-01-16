@@ -448,11 +448,19 @@ class Sheet(base_classes.Sheet):
         if total_rows < 2:
             raise ValueError("total_rows must be greater than 1")
         
+        row_range = self.range((row, 1), (row, self.columns))
         clean_space = Range(sheet=self, arg1=(row + 1, 1), arg2=(row + total_rows - 1, self.columns))
         clean_space.insert(shift = "down", copy_origin = "format_from_left_or_above")
-        #row1.insert(shift = "down", copy_origin = "format_from_left_or_above")
-        #row2 : Range = self.row(row + 1)
-        #row2.copy(row1)
+        row_range.copy(clean_space)
+    
+    def duplicate_column(self, column:int, total_columns:int):
+        if total_columns < 2:
+            raise ValueError("total_columns must be greater than 1")
+        
+        column_range = self.range((1, column), (self.rows, column))
+        clean_space = Range(sheet=self, arg1=(1, column + 1), arg2=(self.rows, column + total_columns - 1))
+        clean_space.insert(shift = "right", copy_origin = "format_from_left_or_above")
+        column_range.copy(clean_space)
             
     def row(self, row):
         M =  Range(sheet=self, arg1=(row, 1), arg2=(row, self.columns))

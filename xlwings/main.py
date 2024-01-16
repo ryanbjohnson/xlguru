@@ -1357,8 +1357,8 @@ class Sheet:
     def duplicate_row(self, row:int, total_rows:int):
         return self.impl.duplicate_row(row, total_rows)
     
-    def duplicate_column(self, column, times=1, insert='right'):
-        return self.impl.duplicate_column(column, times, insert)
+    def duplicate_column(self, column:int, total_columns:int):
+        return self.impl.duplicate_column(column, total_columns)
     
     def row(self, row):
         return self.impl.row(row)

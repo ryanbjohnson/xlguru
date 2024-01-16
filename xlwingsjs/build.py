@@ -16,9 +16,7 @@ source = "src/xlwings.ts"
 
 def webpack():
     return subprocess.run(
-        split("npx webpack"),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+        "npx webpack", shell=True,
         encoding="utf-8",
     )
 
@@ -27,15 +25,9 @@ def prepend_license(path):
     content = Path(path).read_text()
     content = (
         dedent(
-            """\
+            """
             /**
-            * Copyright (C) 2014 - present, Zoomer Analytics GmbH. All rights reserved.
-            * Licensed under BSD-3-Clause license, see: https://docs.xlwings.org/en/stable/license.html
-            *
-            * This file also contains code from core-js
-            * Copyright (C) 2014-2023 Denis Pushkarev, Licensed under MIT license, see https://raw.githubusercontent.com/zloirock/core-js/master/LICENSE
-            * This file also contains code from Webpack
-            * Copyright (C) JS Foundation and other contributors, Licensed under MIT license, see https://raw.githubusercontent.com/webpack/webpack/main/LICENSE
+            * Copyright (C) 2023 - present, Systema Solutions Inc. All rights reserved.
             */
             """
         )
@@ -81,7 +73,7 @@ def build(version):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--version", required=True)
-    args = parser.parse_args()
-    build(args.version)
+    #parser = argparse.ArgumentParser()
+    #parser.add_argument("--version", required=True)
+    #args = parser.parse_args()
+    build('0.30.12')

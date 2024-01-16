@@ -331,6 +331,7 @@ def custom_functions_code(
                 CustomFunctions.associate("{func_name.upper()}", {func_name});
                 """
                 )
+    print(js)                
     return js
 
 

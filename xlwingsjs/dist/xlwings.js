@@ -1,11 +1,6 @@
+
 /**
-* Copyright (C) 2014 - present, Zoomer Analytics GmbH. All rights reserved.
-* Licensed under BSD-3-Clause license, see: https://docs.xlwings.org/en/stable/license.html
-*
-* This file also contains code from core-js
-* Copyright (C) 2014-2023 Denis Pushkarev, Licensed under MIT license, see https://raw.githubusercontent.com/zloirock/core-js/master/LICENSE
-* This file also contains code from Webpack
-* Copyright (C) JS Foundation and other contributors, Licensed under MIT license, see https://raw.githubusercontent.com/webpack/webpack/main/LICENSE
+* Copyright (C) 2023 - present, Systema Solutions Inc. All rights reserved.
 */
 var xlwings;
 /******/ (function() { // webpackBootstrap
@@ -2166,7 +2161,9 @@ module.exports = parent;
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "xlAlert": function() { return /* binding */ xlAlert; }
+/* harmony export */   Login: function() { return /* binding */ Login; },
+/* harmony export */   LoginComplete: function() { return /* binding */ LoginComplete; },
+/* harmony export */   xlAlert: function() { return /* binding */ xlAlert; }
 /* harmony export */ });
 // https://learn.microsoft.com/en-us/office/dev/add-ins/develop/dialog-api-in-office-add-ins
 var dialog;
@@ -2183,6 +2180,9 @@ function dialogCallback(asyncResult) {
 }
 function processMessage(arg) {
     dialog.close();
+    if (arg.message === "guru_api_key") {
+        return;
+    }
     var _a = arg.message.split("|"), selection = _a[0], callback = _a[1];
     if (callback !== "" && callback in globalThis.callbacks) {
         globalThis.callbacks[callback](selection);
@@ -2230,6 +2230,42 @@ function xlAlert(prompt, title, buttons, mode, callback) {
         "&title=" +
         encodeURIComponent("".concat(title)) +
         "&buttons=".concat(buttons, "&mode=").concat(mode, "&callback=").concat(callback), { height: height, width: width, displayInIframe: true }, dialogCallback);
+}
+function Login() {
+    var width;
+    var height;
+    if (Office.context.platform.toString() === "OfficeOnline") {
+        width = 28;
+        height = 36;
+    }
+    else if (Office.context.platform.toString() === "PC") {
+        width = 28; // seems to have a wider min width
+        height = 40;
+    }
+    else {
+        width = 32;
+        height = 30;
+    }
+    Office.context.ui.displayDialogAsync(window.location.origin +
+        "/login", { height: height, width: width, displayInIframe: true }, dialogCallback);
+}
+function LoginComplete() {
+    var width;
+    var height;
+    if (Office.context.platform.toString() === "OfficeOnline") {
+        width = 28;
+        height = 36;
+    }
+    else if (Office.context.platform.toString() === "PC") {
+        width = 28; // seems to have a wider min width
+        height = 40;
+    }
+    else {
+        width = 32;
+        height = 30;
+    }
+    Office.context.ui.displayDialogAsync(window.location.origin +
+        "/logincomplete", { height: height, width: width, displayInIframe: true }, dialogCallback);
 }
 
 
@@ -2324,8 +2360,8 @@ var __webpack_exports__ = {};
   \************************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "registerCallback": function() { return /* binding */ registerCallback; },
-/* harmony export */   "runPython": function() { return /* binding */ runPython; }
+/* harmony export */   registerCallback: function() { return /* binding */ registerCallback; },
+/* harmony export */   runPython: function() { return /* binding */ runPython; }
 /* harmony export */ });
 /* harmony import */ var core_js_actual_object_assign__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/actual/object/assign */ "./node_modules/core-js/actual/object/assign.js");
 /* harmony import */ var core_js_actual_object_assign__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_actual_object_assign__WEBPACK_IMPORTED_MODULE_0__);
@@ -2389,9 +2425,11 @@ var __spreadArray = (undefined && undefined.__spreadArray) || function (to, from
 
 var version = "0.30.12";
 globalThis.callbacks = {};
-function runPython(url, _a) {
+function runPython(url, _a, loadPropertyNames // SSRJ Added loadPropertyNames options
+) {
     if (url === void 0) { url = ""; }
     var _b = _a === void 0 ? {} : _a, _c = _b.auth, auth = _c === void 0 ? "" : _c, _d = _b.include, include = _d === void 0 ? "" : _d, _e = _b.exclude, exclude = _e === void 0 ? "" : _e, _f = _b.headers, headers = _f === void 0 ? {} : _f;
+    if (loadPropertyNames === void 0) { loadPropertyNames = ""; }
     return __awaiter(this, void 0, void 0, function () {
         var error_1;
         var _this = this;
@@ -2491,7 +2529,7 @@ function runPython(url, _a) {
                                             if (namedItem.type === "Range") {
                                                 names.push({
                                                     name: namedItem.name,
-                                                    sheet: namedItem.getRange().worksheet.load("position"),
+                                                    sheet: namedItem.getRange().worksheet.load("position, name"),
                                                     range: namedItem.getRange().load("address"),
                                                     scope_sheet_name: null,
                                                     scope_sheet_index: null,
@@ -2507,6 +2545,7 @@ function runPython(url, _a) {
                                             names2.push({
                                                 name: namedItem.name,
                                                 sheet_index: namedItem.sheet.position,
+                                                sheet_name: namedItem.sheet.name,
                                                 address: namedItem.range.address.split("!").pop(),
                                                 scope_sheet_name: null,
                                                 scope_sheet_index: null,
@@ -2540,9 +2579,15 @@ function runPython(url, _a) {
                                         sheetsLoader.forEach(function (item, ix) {
                                             if (!excludeArray.includes(item["sheet"].name)) {
                                                 var range = void 0;
+                                                // SSRJ Added
+                                                var propertyNames = "values, numberFormatCategories";
+                                                if (loadPropertyNames !== "") {
+                                                    propertyNames = propertyNames + "," + loadPropertyNames;
+                                                }
+                                                // --
                                                 range = item["sheet"]
                                                     .getRange("A1:".concat(item["lastCell"].address))
-                                                    .load("values, numberFormatCategories");
+                                                    .load(propertyNames); // SSRJ changed from hard coded to user defined parameter
                                                 sheetsLoader[ix]["range"] = range;
                                                 // Names (sheet scope)
                                                 sheetsLoader[ix]["names"] = item["sheet"].names.load("name, type");
@@ -2582,7 +2627,7 @@ function runPython(url, _a) {
                                         // Add sheet scoped names to book scoped names
                                         payload["names"] = payload["names"].concat(namesSheetsScope2);
                                         _loop_1 = function (item) {
-                                            var sheet, values, categories_1, tablesArray, tables, tablesLoader, _d, _e, table, _f, tablesLoader_1, table, picturesArray, shapes, _g, _h, shape;
+                                            var sheet, values, categories_1, tablesArray, tables, tablesLoader, _d, _e, table, _f, tablesLoader_1, table, picturesArray, shapes, _g, _h, shape, latestSheet_1;
                                             return __generator(this, function (_j) {
                                                 switch (_j.label) {
                                                     case 0:
@@ -2592,6 +2637,7 @@ function runPython(url, _a) {
                                                         }
                                                         else {
                                                             values = item["range"].values;
+                                                            "";
                                                             if (Office.context.requirements.isSetSupported("ExcelApi", "1.12")) {
                                                                 categories_1 = item["range"].numberFormatCategories;
                                                                 // Handle dates
@@ -2690,6 +2736,13 @@ function runPython(url, _a) {
                                                             pictures: picturesArray,
                                                             tables: tablesArray,
                                                         });
+                                                        // SSRJ added
+                                                        if (loadPropertyNames !== "") {
+                                                            latestSheet_1 = payload["sheets"][payload["sheets"].length - 1];
+                                                            loadPropertyNames.split(",").map(function (s) { return s.trim(); }).forEach(function (property) {
+                                                                latestSheet_1[property] = item["range"][property];
+                                                            });
+                                                        }
                                                         return [2 /*return*/];
                                                 }
                                             });
@@ -2837,9 +2890,11 @@ function registerCallback(callback) {
 // Didn't find a way to use registerCallback so that webpack won't strip out these
 // functions when optimizing
 var funcs = {
+    Login: _alert__WEBPACK_IMPORTED_MODULE_4__.Login,
     setValues: setValues,
     clearContents: clearContents,
     addSheet: addSheet,
+    copySheet: copySheet,
     setSheetName: setSheetName,
     setAutofit: setAutofit,
     setRangeColor: setRangeColor,
@@ -2945,6 +3000,19 @@ function addSheet(context, action) {
                 sheet = context.workbook.worksheets.add();
             }
             sheet.position = parseInt(action.args[0].toString());
+            return [2 /*return*/];
+        });
+    });
+}
+function copySheet(context, action) {
+    return __awaiter(this, void 0, void 0, function () {
+        var newSheetName, sheets, sheet, newsheet;
+        return __generator(this, function (_a) {
+            newSheetName = action.args[0].toString();
+            sheets = context.workbook.worksheets.load("items");
+            sheet = sheets.items[action.sheet_position];
+            newsheet = sheet.copy(Excel.WorksheetPositionType.after, sheet);
+            newsheet.name = newSheetName;
             return [2 /*return*/];
         });
     });
@@ -3181,6 +3249,14 @@ function alert(context, action) {
             myMode = action.args[3].toString();
             myCallback = action.args[4].toString();
             (0,_alert__WEBPACK_IMPORTED_MODULE_4__.xlAlert)(myPrompt, myTitle, myButtons, myMode, myCallback);
+            return [2 /*return*/];
+        });
+    });
+}
+function login(context, action) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            (0,_alert__WEBPACK_IMPORTED_MODULE_4__.Login)();
             return [2 /*return*/];
         });
     });
