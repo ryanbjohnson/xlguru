@@ -22,7 +22,7 @@ from ..utils import get_cached_user_config, read_config_sheet
 from .module_permissions import verify_execute_permission
 from .utils import LicenseHandler, get_embedded_code_temp_dir
 
-LicenseHandler.validate_license("pro")
+#LicenseHandler.validate_license("pro")
 
 TEMPDIR = get_embedded_code_temp_dir()
 

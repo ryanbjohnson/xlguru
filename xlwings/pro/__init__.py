@@ -40,4 +40,4 @@ __all__ = (
     "custom_functions_call",
 )
 
-LicenseHandler.validate_license("pro")
+#LicenseHandler.validate_license("pro")

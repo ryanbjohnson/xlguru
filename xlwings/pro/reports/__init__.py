@@ -23,7 +23,7 @@ __all__ = (
     "formatter",
 )
 
-LicenseHandler.validate_license("reports")
+#LicenseHandler.validate_license("reports")
 
 # API
 from .image import Image

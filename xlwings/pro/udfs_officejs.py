@@ -90,6 +90,7 @@ def xlfunc(f=None, **kwargs):
     else:
         return inner(f)
 
+## SSRJ - Added Local Function Decorator
 def xl_localfunc(f=None, **kwargs):
     def inner(f):
         if not hasattr(f, "__xllfunc__"):
@@ -173,7 +174,7 @@ def to_scalar(arg):
     return arg
 
 
-async def custom_functions_call(data, module):
+def custom_functions_call(data, module):  # SSRJ - used to be async function
     func_name = data["func_name"]
     args = data["args"]
     func = getattr(module, func_name)
@@ -205,7 +206,8 @@ async def custom_functions_call(data, module):
                 None, arg, arg_info["options"], engine_name="officejs"
             )
     if inspect.iscoroutinefunction(func):
-        ret = await func(*args)
+        #ret = await func(*args) # SSRJ
+        raise XlwingsError("Coroutines are not supported in custom functions.")
     else:
         ret = func(*args)
 

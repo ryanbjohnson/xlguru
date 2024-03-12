@@ -1,6 +1,5 @@
 # TODO: add all classes and use in _mac.py and _windows.py
 
-
 class Apps:
     def keys(self):
         raise NotImplementedError()

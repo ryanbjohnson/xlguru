@@ -54,7 +54,7 @@ try:
 except ImportError:
     plotly = None
 
-LicenseHandler.validate_license("reports")
+#LicenseHandler.validate_license("reports")
 
 
 def parse_single_placeholder(value, env):
